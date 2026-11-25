@@ -1,0 +1,27 @@
+{
+  "info": {
+    "name": "Secure Connect Platform - Lab 4",
+    "description": "API tests for signup, login, protected profile, RBAC and notes CRUD.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "noteId", "value": "" },
+    { "key": "email", "value": "student@example.com" },
+    { "key": "password", "value": "StrongPass123!" }
+  ],
+  "item": [
+    { "name": "Health Check", "request": { "method": "GET", "url": "{{baseUrl}}/api/health" } },
+    { "name": "Signup", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('token', pm.response.json().token);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Student\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" }, "url": "{{baseUrl}}/api/auth/signup" } },
+    { "name": "Login", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('token', pm.response.json().token);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" }, "url": "{{baseUrl}}/api/auth/login" } },
+    { "name": "My Profile (protected)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/auth/me" } },
+    { "name": "Admin Users (admin only)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/auth/users" } },
+    { "name": "Create Note", "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('noteId', pm.response.json().note._id);"] } }], "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}"}, {"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n  \"title\": \"My first note\",\n  \"content\": \"This is a private note.\"\n}" }, "url": "{{baseUrl}}/api/notes" } },
+    { "name": "List My Notes", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/notes" } },
+    { "name": "Get Note", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/notes/{{noteId}}" } },
+    { "name": "Update Note", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{token}}"}, {"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated note title\"\n}" }, "url": "{{baseUrl}}/api/notes/{{noteId}}" } },
+    { "name": "Delete Note", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/notes/{{noteId}}" } },
+    { "name": "Protected Notes Without Token (expect 401)", "request": { "method": "GET", "url": "{{baseUrl}}/api/notes" } }
+  ]
+}

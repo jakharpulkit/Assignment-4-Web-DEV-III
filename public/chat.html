@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Secure Connect Chat</title>
+  <style>
+    body{font:16px system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 16px;background:#f5f7fb;color:#172033}
+    main{background:white;padding:24px;border-radius:14px;box-shadow:0 8px 30px #17203312}
+    input,button{font:inherit;padding:10px;border:1px solid #ccd3df;border-radius:8px}
+    input{box-sizing:border-box;width:100%;margin:6px 0 12px}
+    button{cursor:pointer;background:#243b70;color:white;border:0}
+    #messages{height:280px;overflow:auto;border:1px solid #e0e5ed;border-radius:8px;padding:12px;margin:12px 0}
+    .row{display:flex;gap:8px}.row input{flex:1}
+    #status{color:#53627a}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Secure Connect Chat</h1>
+  <p>Paste the JWT returned by <code>POST /api/auth/login</code>. Chat connections require authentication.</p>
+  <label for="token">JWT token</label><input id="token" placeholder="Paste access token">
+  <button id="connect">Connect</button> <span id="status">Not connected</span>
+  <div id="messages" aria-live="polite"></div>
+  <form id="send" class="row">
+    <input id="message" placeholder="Write a message..." maxlength="1000" required>
+    <button type="submit">Send</button>
+  </form>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  let socket;
+  const status = document.getElementById('status');
+  const messages = document.getElementById('messages');
+  function addLine(text) {
+    const p = document.createElement('p');
+    p.textContent = text;
+    messages.appendChild(p);
+    messages.scrollTop = messages.scrollHeight;
+  }
+  document.getElementById('connect').onclick = () => {
+    if (socket) socket.disconnect();
+    socket = io({ autoConnect: false, auth: { token: document.getElementById('token').value.trim() } });
+    socket.on('connect', () => status.textContent = 'Connected');
+    socket.on('connect_error', err => status.textContent = 'Connection failed: ' + err.message);
+    socket.on('disconnect', () => status.textContent = 'Disconnected');
+    socket.on('chat:ready', data => addLine(data.message));
+    socket.on('chat:message', data => addLine(data.username + ': ' + data.message));
+    socket.on('chat:error', data => addLine('Error: ' + data.message));
+    socket.connect();
+  };
+  document.getElementById('send').onsubmit = event => {
+    event.preventDefault();
+    const input = document.getElementById('message');
+    if (socket && socket.connected && input.value.trim()) {
+      socket.emit('chat:message', { message: input.value.trim() });
+      input.value = '';
+    }
+  };
+</script>
+</body>
+</html>
