@@ -88,7 +88,7 @@ When saved, embed them like this:
 - Passwords are stored as bcrypt hashes, never in plain text.
 - JWT secrets and database credentials belong only in local `.env`.
 - Notes queries are scoped to the authenticated owner's MongoDB ObjectId.
-- New signups receive the `user` role; the admin-only endpoint demonstrates RBAC. Do not expose role assignment publicly.
+- New signups receive the `user` role; the admin-only endpoint demonstrates RBAC. To test the 403 response, use a normal signup token. To test the admin success path in a local development database, promote a test account manually with mongosh: `db.users.updateOne({ email: "student@example.com" }, { $set: { role: "admin" } })`, then log in again to receive a JWT containing the admin role. Do not expose role assignment publicly.
 - For production, configure a strict CORS origin, HTTPS, rate limiting, input validation, and managed secret storage.
 
 ## Project structure
